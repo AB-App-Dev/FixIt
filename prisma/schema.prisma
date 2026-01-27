@@ -1,0 +1,53 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../generated/prisma"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Incident {
+  id           String         @id @default(cuid())
+  title        String         @db.VarChar(200)
+  description  String         @db.Text
+  location     String
+  imageUrl     String
+  status       IncidentStatus @default(OPEN)
+  reportDate   DateTime       @default(now())
+  closeDate    DateTime?
+  wantsContact Boolean        @default(false)
+  phoneNumber  String?        @db.VarChar(30)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([status])
+  @@index([reportDate])
+  @@map("incidents")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(100)
+  email     String   @db.VarChar(255)
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+enum IncidentStatus {
+  OPEN
+  CLOSED
+}
