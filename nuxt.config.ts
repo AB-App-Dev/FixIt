@@ -7,4 +7,10 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'system',
   },
+  runtimeConfig: {
+    recaptchaSecretKey: process.env.RECAPTCHA_SECRET_KEY,
+    public: {
+      recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+    },
+  },
 })
