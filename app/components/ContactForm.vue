@@ -32,13 +32,13 @@ async function submit() {
 </script>
 
 <template>
-  <div>
+  <div class="max-w-[500px] mx-auto">
     <h2 class="text-lg font-semibold mb-3">Kontakt</h2>
 
-    <p v-if="success" class="text-sm text-(--ui-success) mb-3">
+    <p v-if="success" class="text-sm text-success mb-3">
       Ihre Nachricht wurde erfolgreich gesendet.
     </p>
-    <p v-if="error" class="text-sm text-(--ui-error) mb-3">
+    <p v-if="error" class="text-sm text-error mb-3">
       {{ error }}
     </p>
 

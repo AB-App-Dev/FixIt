@@ -9,11 +9,13 @@ datasource db {
 }
 
 model Admin {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(cuid())
+  username         String    @unique
+  password         String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@map("admins")
 }
@@ -21,7 +23,7 @@ model Admin {
 model Incident {
   id           String         @id @default(cuid())
   title        String         @db.VarChar(200)
-  description  String         @db.Text
+  description  String
   location     String
   imageUrl     String
   status       IncidentStatus @default(OPEN)
@@ -41,7 +43,7 @@ model ContactMessage {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(100)
   email     String   @db.VarChar(255)
-  message   String   @db.Text
+  message   String
   createdAt DateTime @default(now())
 
   @@map("contact_messages")

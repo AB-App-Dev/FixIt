@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { useReCaptcha } from 'vue-recaptcha-v3'
-
-const recaptcha = useReCaptcha()
-
 const form = reactive({
   title: '',
   description: '',
@@ -17,6 +13,32 @@ const success = ref(false)
 const error = ref('')
 const imagePreview = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const selectedLocation = ref<[number, number] | null>(null)
+const mapCenter = ref<[number, number]>([46.7089, 15.7761]) // Mureck, Steiermark
+
+// Fix Leaflet marker icon issue
+const fixLeafletIcon = async () => {
+  if (import.meta.client) {
+    const L = await import('leaflet')
+    delete (L.Icon.Default.prototype as any)._getIconUrl
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    })
+  }
+}
+
+onMounted(() => {
+  fixLeafletIcon()
+})
+
+function onMapClick(event: any) {
+  const { lat, lng } = event.latlng
+  selectedLocation.value = [lat, lng]
+  form.location = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+  touched.location = true
+}
 const touched = reactive({
   title: false,
   description: false,
@@ -164,6 +186,7 @@ function resetForm() {
   form.wantsContact = false
   form.phoneNumber = ''
   imagePreview.value = null
+  selectedLocation.value = null
   if (fileInput.value) {
     fileInput.value.value = ''
   }
@@ -189,20 +212,12 @@ async function submit() {
   loading.value = true
 
   try {
-    await recaptcha?.recaptchaLoaded()
-    const recaptchaToken = await recaptcha?.executeRecaptcha('submit_incident')
-
-    if (!recaptchaToken) {
-      throw new Error('reCAPTCHA-Überprüfung fehlgeschlagen. Bitte versuchen Sie es erneut.')
-    }
-
     const formData = new FormData()
     formData.append('title', form.title)
     formData.append('description', form.description)
     formData.append('location', form.location)
     formData.append('image', form.image!)
     formData.append('wantsContact', String(form.wantsContact))
-    formData.append('recaptchaToken', recaptchaToken)
     if (form.wantsContact && form.phoneNumber) {
       formData.append('phoneNumber', form.phoneNumber)
     }
@@ -295,16 +310,39 @@ async function submit() {
       </UFormField>
 
       <UFormField
-        label="Standort"
+        label="Standort auf Karte auswählen"
         required
         :error="touched.location && errors.location ? errors.location : undefined"
       >
-        <UInput
-          v-model="form.location"
-          placeholder="z.B. Hauptstraße 15, Musterstadt"
-          class="w-full"
-          @blur="touched.location = true"
-        />
+        <div class="space-y-2">
+          <ClientOnly>
+            <div class="h-64 rounded border border-default overflow-hidden">
+              <LMap
+                :zoom="13"
+                :center="mapCenter"
+                class="h-full w-full cursor-pointer"
+                @click="onMapClick"
+              >
+                <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <LMarker v-if="selectedLocation" :lat-lng="selectedLocation" />
+              </LMap>
+            </div>
+            <template #fallback>
+              <div class="h-64 rounded border border-default flex items-center justify-center bg-muted">
+                <span class="text-muted">Karte wird geladen...</span>
+              </div>
+            </template>
+          </ClientOnly>
+          <UInput
+            v-model="form.location"
+            placeholder="Koordinaten"
+            class="w-full"
+            readonly
+          />
+          <p v-if="!selectedLocation" class="text-xs text-muted">
+            Klicken Sie auf die Karte, um den Standort zu markieren.
+          </p>
+        </div>
       </UFormField>
 
       <UFormField
@@ -370,14 +408,6 @@ async function submit() {
         icon="i-lucide-send"
         :loading="loading"
       />
-
-      <p class="text-xs text-muted mt-4">
-        Diese Seite ist durch reCAPTCHA geschützt. Es gelten die
-        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-primary">Datenschutzerklärung</a>
-        und
-        <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-primary">Nutzungsbedingungen</a>
-        von Google.
-      </p>
     </form>
     </template>
   </div>

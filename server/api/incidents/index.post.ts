@@ -3,21 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
 
-async function verifyRecaptcha(token: string, secretKey: string): Promise<boolean> {
-  const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `secret=${secretKey}&response=${token}`,
-  })
-
-  const data = await response.json()
-  return data.success && data.score >= 0.5
-}
-
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
   const formData = await readMultipartFormData(event)
 
   if (!formData) {
@@ -40,22 +26,6 @@ export default defineEventHandler(async (event) => {
     } else if (item.name && item.data) {
       fields[item.name] = item.data.toString('utf-8')
     }
-  }
-
-  // Verify reCAPTCHA token
-  if (!fields.recaptchaToken) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'reCAPTCHA-Token fehlt.',
-    })
-  }
-
-  const isValidRecaptcha = await verifyRecaptcha(fields.recaptchaToken, config.recaptchaSecretKey)
-  if (!isValidRecaptcha) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'reCAPTCHA-Überprüfung fehlgeschlagen. Bitte versuchen Sie es erneut.',
-    })
   }
 
   if (!fields.title || !fields.description || !fields.location || !imageFile) {

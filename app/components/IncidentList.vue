@@ -40,6 +40,11 @@ function formatDate(date: string) {
   })
 }
 
+function getGoogleMapsUrl(location: string) {
+  const coords = location.replace(/\s/g, '')
+  return `https://www.google.com/maps?q=${coords}`
+}
+
 function openConfirm(id: string) {
   closingId.value = id
   confirmOpen.value = true
@@ -68,10 +73,19 @@ const accordionItems = computed(() =>
 </script>
 
 <template>
-  <div>
-    <h2 class="text-lg font-semibold mb-3">{{ title }}</h2>
+  <div
+    class="rounded-lg border p-4"
+    :class="type === 'open' ? 'border-warning bg-warning/5' : 'border-success bg-success/5'"
+  >
+    <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+      <UIcon
+        :name="type === 'open' ? 'i-lucide-alert-circle' : 'i-lucide-check-circle'"
+        :class="type === 'open' ? 'text-warning' : 'text-success'"
+      />
+      {{ title }}
+    </h2>
 
-    <p v-if="incidents.length === 0" class="text-(--ui-text-muted) text-sm">
+    <p v-if="incidents.length === 0" class="text-muted text-sm">
       Keine Meldungen vorhanden.
     </p>
 
@@ -80,8 +94,15 @@ const accordionItems = computed(() =>
       type="single"
       collapsible
       :items="accordionItems"
+      :ui="{ trigger: 'cursor-pointer hover:bg-muted/50 rounded-md transition-colors' }"
     >
       <template #leading="{ item }">
+        <span class="text-sm text-muted mr-4">
+          {{ formatDate(type === 'closed'
+            ? incidents.find(i => i.id === item.value)!.closeDate!
+            : incidents.find(i => i.id === item.value)!.reportDate
+          ) }}
+        </span>
         <UBadge
           v-if="type === 'open' && isNew(incidents.find(i => i.id === item.value)!.reportDate)"
           label="Neu"
@@ -91,15 +112,6 @@ const accordionItems = computed(() =>
         />
       </template>
 
-      <template #trailing="{ item }">
-        <span class="text-sm text-(--ui-text-muted)">
-          {{ formatDate(type === 'closed'
-            ? incidents.find(i => i.id === item.value)!.closeDate!
-            : incidents.find(i => i.id === item.value)!.reportDate
-          ) }}
-        </span>
-      </template>
-
       <template
         v-for="incident in incidents"
         :key="incident.id"
@@ -107,10 +119,10 @@ const accordionItems = computed(() =>
       >
         <div class="space-y-3 px-2 pb-3">
           <a
-            :href="incident.location"
+            :href="getGoogleMapsUrl(incident.location)"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-1 text-sm text-(--ui-primary) hover:underline"
+            class="inline-flex items-center gap-1 text-sm text-primary hover:underline"
           >
             <UIcon name="i-lucide-map-pin" />
             Standort auf Google Maps
@@ -122,11 +134,11 @@ const accordionItems = computed(() =>
             class="rounded-md max-h-48 object-cover w-full"
           />
 
-          <p class="text-sm text-(--ui-text-muted)">{{ incident.description }}</p>
+          <p class="text-sm text-muted">{{ incident.description }}</p>
 
           <div v-if="loggedIn && incident.wantsContact" class="text-sm">
             <p class="font-medium">Kontaktanfrage:</p>
-            <a :href="`tel:${incident.phoneNumber}`" class="text-(--ui-primary) hover:underline">
+            <a :href="`tel:${incident.phoneNumber}`" class="text-primary hover:underline">
               {{ incident.phoneNumber }}
             </a>
           </div>

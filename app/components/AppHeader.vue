@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { loggedIn, logout } = useAuth()
 const colorMode = useColorMode()
+const toast = useToast()
 
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -8,7 +9,11 @@ const toggleTheme = () => {
 
 const handleLogout = async () => {
   await logout()
-  navigateTo('/')
+  toast.add({
+    title: 'Erfolgreich abgemeldet',
+    color: 'success',
+    icon: 'i-lucide-check-circle',
+  })
 }
 </script>
 
@@ -28,7 +33,6 @@ const handleLogout = async () => {
         />
         <UButton
           v-if="loggedIn"
-          label="Abmelden"
           icon="i-lucide-log-out"
           variant="ghost"
           color="neutral"

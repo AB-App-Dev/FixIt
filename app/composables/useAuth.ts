@@ -10,10 +10,10 @@ export const useAuth = () => {
     }
   }
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     await $fetch('/api/auth/login', {
       method: 'POST',
-      body: { username, password },
+      body: { email, password },
     })
     loggedIn.value = true
   }
